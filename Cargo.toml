@@ -1,0 +1,29 @@
+[package]
+name = "wasmedge_sdk_async_wasi"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4.17"
+wasmedge-sdk = { path = "../WasmEdge-12/bindings/rust/wasmedge-sdk", features = [
+    "async",
+    "ffi",
+] }
+wasmedge-async-wasi = { path = "./wasmedge_async_wasi", features = [
+    "async_tokio",
+] }
+wasmedge-sys = { path = "../WasmEdge-12/bindings/rust/wasmedge-sys", features = [
+    "async",
+    "ffi",
+] }
+
+wasmtime-fiber = { version = "6" }
+wasmedge-types = { path = "../WasmEdge-12/bindings/rust/wasmedge-types" }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+
+[workspace]
+exclude = ["wasm"]

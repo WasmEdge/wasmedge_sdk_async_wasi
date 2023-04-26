@@ -1,0 +1,25 @@
+[package]
+name = "wasmedge-async-wasi"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libc = "0.2"
+getrandom = "0.2"
+tokio = { version = "1", features = ["full"], optional = true }
+bitflags = "1.3"
+path-absolutize = "3.0.13"
+socket2 = "0.4.7"
+futures = { version = "0.3" }
+serde = { version = "1", features = ["derive"], optional = true }
+wasmedge_util = { path = "../wasmedge_util" }
+
+[dev-dependencies]
+serde_json = { version = "1" }
+
+[features]
+default = ["async_tokio", "serialize"]
+async_tokio = ["tokio"]
+serialize = ["serde"]
