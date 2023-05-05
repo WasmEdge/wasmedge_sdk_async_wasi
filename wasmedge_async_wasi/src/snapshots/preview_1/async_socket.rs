@@ -83,27 +83,6 @@ pub fn sock_bind<M: Memory>(
     }
 }
 
-pub fn sock_bind_device<M: Memory>(
-    ctx: &mut WasiCtx,
-    mem: &mut M,
-    fd: __wasi_fd_t,
-    name_ptr: WasmPtr<u8>,
-    name_len: __wasi_size_t,
-) -> Result<(), Errno> {
-    let sock_fd = ctx.get_mut_vfd(fd)?;
-    let name = mem.get_slice(name_ptr, name_len as usize)?;
-    if let VFD::AsyncSocket(s) = sock_fd {
-        if name_ptr.0 != 0 {
-            s.bind_device(Some(name))?;
-        } else {
-            s.bind_device(None)?;
-        }
-        Ok(())
-    } else {
-        Err(Errno::__WASI_ERRNO_NOTSOCK)
-    }
-}
-
 pub fn sock_listen<M: Memory>(
     ctx: &mut WasiCtx,
     _mem: &mut M,
@@ -507,14 +486,20 @@ pub fn sock_getsockopt<M: Memory>(
                     return Err(Errno::__WASI_ERRNO_INVAL);
                 }
 
-                if let Some(timeout) = s.get_so_recv_timeout() {
-                    let timeval = __wasi_timeval {
+                let timeval = if let Some(timeout) = s.get_so_recv_timeout() {
+                    __wasi_timeval {
                         tv_sec: (timeout.as_secs() as i64).to_le(),
                         tv_usec: (timeout.subsec_nanos() as i64).to_le(),
-                    };
-                    let offset = WasmPtr::<__wasi_timeval>::from(flag.0);
-                    mem.write_data(offset, timeval)?;
-                }
+                    }
+                } else {
+                    __wasi_timeval {
+                        tv_sec: 0,
+                        tv_usec: 0,
+                    }
+                };
+
+                let offset = WasmPtr::<__wasi_timeval>::from(flag.0);
+                mem.write_data(offset, timeval)?;
 
                 return Ok(());
             }
@@ -523,14 +508,20 @@ pub fn sock_getsockopt<M: Memory>(
                     return Err(Errno::__WASI_ERRNO_INVAL);
                 }
 
-                if let Some(timeout) = s.get_so_send_timeout() {
-                    let timeval = __wasi_timeval {
+                let timeval = if let Some(timeout) = s.get_so_send_timeout() {
+                    __wasi_timeval {
                         tv_sec: (timeout.as_secs() as i64).to_le(),
                         tv_usec: (timeout.subsec_nanos() as i64).to_le(),
-                    };
-                    let offset = WasmPtr::<__wasi_timeval>::from(flag.0);
-                    mem.write_data(offset, timeval)?;
-                }
+                    }
+                } else {
+                    __wasi_timeval {
+                        tv_sec: 0,
+                        tv_usec: 0,
+                    }
+                };
+
+                let offset = WasmPtr::<__wasi_timeval>::from(flag.0);
+                mem.write_data(offset, timeval)?;
 
                 return Ok(());
             }
@@ -539,6 +530,19 @@ pub fn sock_getsockopt<M: Memory>(
                     return Err(Errno::__WASI_ERRNO_INVAL);
                 }
                 s.get_so_accept_conn()? as i32
+            }
+            __wasi_sock_opt_so_t::__WASI_SOCK_OPT_SO_BINDTODEVICE => {
+                let device = s.device()?.unwrap_or_default();
+                let offset = WasmPtr::<u8>::from(flag.0);
+                let copy_len = device.len().min((flag_size.wrapping_sub(1)) as usize);
+                if copy_len > 0 {
+                    let wasm_buf = mem.mut_slice(offset, copy_len)?;
+                    wasm_buf.copy_from_slice(&device[0..copy_len]);
+                    mem.write_data(flag_size_ptr, (copy_len + 1) as u32)?;
+                } else {
+                    mem.write_data(flag_size_ptr, 0 as u32)?;
+                }
+                return Ok(());
             }
             _ => {
                 return Err(Errno::__WASI_ERRNO_NOPROTOOPT);
@@ -647,6 +651,16 @@ pub fn sock_setsockopt<M: Memory>(
             }
             __wasi_sock_opt_so_t::__WASI_SOCK_OPT_SO_ACCEPTCONN => {
                 return Err(Errno::__WASI_ERRNO_FAULT);
+            }
+            __wasi_sock_opt_so_t::__WASI_SOCK_OPT_SO_BINDTODEVICE => {
+                if flag_size == 0 {
+                    s.bind_device(None)?;
+                } else {
+                    let buf_ptr = WasmPtr::<u8>::from(flag.0);
+                    let wasm_buf = mem.get_slice(buf_ptr, flag_size as usize)?;
+                    s.bind_device(Some(wasm_buf))?;
+                }
+                return Ok(());
             }
             _ => {
                 return Err(Errno::__WASI_ERRNO_NOPROTOOPT);

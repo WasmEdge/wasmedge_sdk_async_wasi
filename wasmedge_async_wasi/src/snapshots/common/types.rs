@@ -401,6 +401,7 @@ pub mod __wasi_sock_opt_so_t {
     pub const __WASI_SOCK_OPT_SO_RCVTIMEO: Type = 11;
     pub const __WASI_SOCK_OPT_SO_SNDTIMEO: Type = 12;
     pub const __WASI_SOCK_OPT_SO_ACCEPTCONN: Type = 13;
+    pub const __WASI_SOCK_OPT_SO_BINDTODEVICE: Type = 14;
 }
 pub mod __wasi_aiflags_t {
     pub type Type = u16;

@@ -55,6 +55,13 @@ impl AsyncWasiSocketInner {
         }
     }
 
+    fn device(&self) -> io::Result<Option<Vec<u8>>> {
+        match self {
+            AsyncWasiSocketInner::PreOpen(s) => s.device(),
+            AsyncWasiSocketInner::AsyncFd(s) => s.get_ref().device(),
+        }
+    }
+
     fn listen(&mut self, backlog: i32) -> io::Result<()> {
         match self {
             AsyncWasiSocketInner::PreOpen(s) => {
@@ -233,6 +240,14 @@ impl AsyncWasiSocket {
         }
         self.state.local_addr = Some(addr);
         Ok(())
+    }
+
+    pub fn device(&self) -> io::Result<Option<Vec<u8>>> {
+        if self.state.bind_device.is_empty() {
+            self.inner.device()
+        } else {
+            Ok(Some(self.state.bind_device.clone()))
+        }
     }
 
     pub fn bind_device(&mut self, interface: Option<&[u8]>) -> io::Result<()> {

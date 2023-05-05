@@ -1350,37 +1350,6 @@ pub fn sock_bind(
     }
 }
 
-pub fn sock_bind_device(
-    frame: &mut CallingFrame,
-    wasi_ctx: &mut WasiCtx,
-    args: Vec<WasmValue>,
-) -> std::result::Result<Vec<WasmValue>, HostFuncError> {
-    log::trace!("sock_bind_device enter {args:?}");
-    let args: Vec<WasmVal> = args.into_iter().map(|v| v.into()).collect();
-    let mut mem = if let Some(mem) = frame.memory_mut(0) {
-        WasiMem(mem)
-    } else {
-        // MemoryOutOfBounds
-        return Err(HostFuncError::Runtime(0x88));
-    };
-    let mem = &mut mem;
-    let n = 3;
-    if let Some([WasmVal::I32(p1), WasmVal::I32(p2), WasmVal::I32(p3)]) = args.get(0..n) {
-        let fd = *p1;
-        let name_ptr = *p2 as usize;
-        let name_len = *p3 as u32;
-        Ok(to_wasm_return(p::async_socket::sock_bind_device(
-            wasi_ctx,
-            mem,
-            fd,
-            WasmPtr::from(name_ptr),
-            name_len,
-        )))
-    } else {
-        Err(func_type_miss_match_error())
-    }
-}
-
 pub fn sock_listen(
     frame: &mut CallingFrame,
     wasi_ctx: &mut WasiCtx,
@@ -2279,14 +2248,6 @@ pub fn wasi_impls() -> Vec<WasiFunc<WasiCtx>> {
                 vec![ValType::I32],
             ),
             sock_bind
-        ),
-        sync_fn!(
-            "sock_bind_device",
-            (
-                vec![ValType::I32, ValType::I32, ValType::I32],
-                vec![ValType::I32],
-            ),
-            sock_bind_device
         ),
         sync_fn!(
             "sock_listen",
