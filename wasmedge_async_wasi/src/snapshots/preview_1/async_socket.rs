@@ -198,15 +198,15 @@ pub async fn sock_recv_from<M: Memory>(
     buf_ptr: WasmPtr<__wasi_iovec_t>,
     buf_len: __wasi_size_t,
     wasi_addr_ptr: WasmPtr<__wasi_address_t>,
-    port_ptr: WasmPtr<u32>,
     flags: __wasi_riflags_t::Type,
+    port_ptr: WasmPtr<u32>,
     ro_data_len_ptr: WasmPtr<__wasi_size_t>,
     ro_flags_ptr: WasmPtr<__wasi_roflags_t::Type>,
 ) -> Result<(), Errno> {
     let sock_fd = ctx.get_mut_vfd(fd)?;
     if let VFD::AsyncSocket(s) = sock_fd {
         let wasi_addr = *(mem.mut_data(wasi_addr_ptr)?);
-        if wasi_addr.buf_len < 16 {
+        if wasi_addr.buf_len < 128 {
             return Err(Errno::__WASI_ERRNO_INVAL);
         }
 
@@ -222,26 +222,33 @@ pub async fn sock_recv_from<M: Memory>(
 
         let (n, trunc, addr) = s.recv_from(&mut iovec, native_flags).await?;
 
-        let addr_len: u32 = match addr {
+        match addr {
             Some(SocketAddr::V4(addrv4)) => {
-                let wasi_addr_buf_ptr = WasmPtr::<u8>::from(wasi_addr.buf as usize);
+                let family_ptr = WasmPtr::<u16>::from(wasi_addr.buf as usize);
+                let wasi_addr_buf_ptr = WasmPtr::<u8>::from(2 + wasi_addr.buf as usize);
                 let wasi_addr_buf = mem.mut_slice(wasi_addr_buf_ptr, 4)?;
                 wasi_addr_buf.copy_from_slice(&addrv4.ip().octets());
+
+                mem.write_data(
+                    family_ptr,
+                    __wasi_address_family_t::__WASI_ADDRESS_FAMILY_INET4 as u16,
+                )?;
+
                 mem.write_data(port_ptr, (addrv4.port() as u32).to_le())?;
-                4
             }
             Some(SocketAddr::V6(addrv6)) => {
-                let wasi_addr_buf_ptr = WasmPtr::<u8>::from(wasi_addr.buf as usize);
+                let family_ptr = WasmPtr::<u16>::from(wasi_addr.buf as usize);
+                let wasi_addr_buf_ptr = WasmPtr::<u8>::from(2 + wasi_addr.buf as usize);
                 let wasi_addr_buf = mem.mut_slice(wasi_addr_buf_ptr, 16)?;
                 wasi_addr_buf.copy_from_slice(&addrv6.ip().octets());
+                mem.write_data(
+                    family_ptr,
+                    __wasi_address_family_t::__WASI_ADDRESS_FAMILY_INET6 as u16,
+                )?;
                 mem.write_data(port_ptr, (addrv6.port() as u32).to_le())?;
-                16
             }
-            None => 0,
+            None => {}
         };
-
-        let wasi_addr = mem.mut_data(wasi_addr_ptr)?;
-        wasi_addr.buf_len = addr_len.to_le();
 
         if trunc {
             mem.write_data(

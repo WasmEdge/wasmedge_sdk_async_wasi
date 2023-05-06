@@ -1510,8 +1510,8 @@ pub fn sock_recv_from(
             let buf_ptr = *p2 as usize;
             let buf_len = *p3 as u32;
             let wasi_addr_ptr = *p4 as usize;
-            let port_ptr = *p5 as usize;
-            let flags = *p6 as u16;
+            let flags = *p5 as u16;
+            let port_ptr = *p6 as usize;
             let ro_data_len_ptr = *p7 as usize;
             let ro_flags_ptr = *p8 as usize;
 
@@ -1523,8 +1523,8 @@ pub fn sock_recv_from(
                     WasmPtr::from(buf_ptr),
                     buf_len,
                     WasmPtr::from(wasi_addr_ptr),
-                    WasmPtr::from(port_ptr),
                     flags,
+                    WasmPtr::from(port_ptr),
                     WasmPtr::from(ro_data_len_ptr),
                     WasmPtr::from(ro_flags_ptr),
                 )
