@@ -2462,7 +2462,7 @@ mod test {
     use super::*;
     use wasmedge_sdk::VmBuilder;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     pub async fn test_vm() {
         async fn tick() {
             let mut i = 0;
@@ -2470,23 +2470,30 @@ mod test {
                 println!("i={i}");
                 tokio::time::sleep(std::time::Duration::from_millis(500)).await;
                 i += 1;
+                if i >= 8 {
+                    break;
+                }
             }
         }
 
-        let vm = Box::new(VmBuilder::default().build().unwrap());
-        let wasi_funcs = wasi_impls();
-        let mut wasi_ctx = Box::new(WasiCtx::new());
-        wasi_ctx.push_arg("abc".into());
-        wasi_ctx.push_env("a", "1");
-        let mut wasi_vm = WasiVm::create(vm, wasi_ctx, wasi_funcs).unwrap();
+        for id in 0..10 {
+            tokio::spawn(async move {
+                let vm = Box::new(VmBuilder::default().build().unwrap());
+                let wasi_funcs = wasi_impls();
+                let mut wasi_ctx = Box::new(WasiCtx::new());
+                wasi_ctx.push_arg("abc".into());
+                wasi_ctx.push_env("id", &format!("{id}"));
+                let mut wasi_vm = WasiVm::create(vm, wasi_ctx, wasi_funcs).unwrap();
 
-        tokio::spawn(tick());
-        let r = wasi_vm
-            .as_mut()
-            .run_func_from_file_async("hello.wasm", "_start", [])
-            .await
-            .unwrap();
+                let r = wasi_vm
+                    .as_mut()
+                    .run_func_from_file_async("hello.wasm", "_start", [])
+                    .await
+                    .unwrap();
 
-        println!("{r:?}");
+                println!("{r:?}");
+            });
+        }
+        tick().await;
     }
 }

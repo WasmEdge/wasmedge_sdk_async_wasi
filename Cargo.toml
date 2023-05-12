@@ -19,7 +19,6 @@ wasmedge-sys = { path = "../WasmEdge-12/bindings/rust/wasmedge-sys", features = 
     "ffi",
 ] }
 
-wasmtime-fiber = { version = "6" }
 wasmedge-types = { path = "../WasmEdge-12/bindings/rust/wasmedge-types" }
 
 [dev-dependencies]
