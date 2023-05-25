@@ -2496,4 +2496,50 @@ mod test {
         }
         tick().await;
     }
+
+    #[test]
+    pub fn test_timeout() {
+        use wasmedge_sdk::{
+            config::{CommonConfigOptions, ConfigBuilder, HostRegistrationConfigOptions},
+            VmBuilder,
+        };
+
+        let config = ConfigBuilder::new(CommonConfigOptions::default())
+            .with_host_registration_config(HostRegistrationConfigOptions::default().wasi(true))
+            .build()
+            .unwrap();
+
+        let mut vm = VmBuilder::default().with_config(config).build().unwrap();
+
+        let args = vec!["arg1", "arg2"];
+        let envs = vec!["ENV1=VAL1", "ENV2=VAL2", "ENV3=VAL3"];
+        let wasi_module = vm.wasi_module_mut().ok_or("Not found wasi module").unwrap();
+        wasi_module.initialize(Some(args), Some(envs), None);
+
+        let vm = vm.register_module_from_file("hello", "hello.wasm").unwrap();
+        println!("run wasm");
+        let r = vm.run_func_timeout(Some("hello"), "_start", vec![], 2);
+        println!("run wasm result = {r:?}");
+    }
+
+    #[tokio::test]
+    pub async fn test_async_timeout() {
+        let vm = VmBuilder::default().build().unwrap();
+        let vm = Box::new(vm);
+        let wasi_funcs = wasi_impls();
+        let mut wasi_ctx = Box::new(WasiCtx::new());
+        wasi_ctx.push_arg("abc".into());
+        wasi_ctx.push_env("id", &format!("1"));
+        let mut wasi_vm = WasiVm::create(vm, wasi_ctx, wasi_funcs).unwrap();
+        wasi_vm
+            .as_mut()
+            .register_module_from_file_("hello", "hello.wasm")
+            .unwrap();
+
+        let r = wasi_vm
+            .as_ref()
+            .run_func_async_timeout(Some("hello"), "_start", vec![], 20)
+            .await;
+        println!("{r:?}");
+    }
 }
