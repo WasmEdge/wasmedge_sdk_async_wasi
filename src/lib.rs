@@ -7,7 +7,7 @@ use wasi::snapshots::{
     },
     WasiCtx,
 };
-use wasmedge_async_wasi as wasi;
+pub use wasmedge_async_wasi as wasi;
 use wasmedge_async_wasi::snapshots::common::memory::WasmPtr;
 use wasmedge_sdk::error::HostFuncError;
 use wasmedge_sdk::{Vm, WasmEdgeResult};
