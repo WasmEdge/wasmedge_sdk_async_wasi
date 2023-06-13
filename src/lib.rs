@@ -1800,6 +1800,17 @@ pub fn sock_setsockopt(
     }
 }
 
+pub fn sock_getaddrinfo(
+    _frame: &mut CallingFrame,
+    _wasi_ctx: &mut WasiCtx,
+    _args: Vec<WasmValue>,
+) -> std::result::Result<Vec<WasmValue>, HostFuncError> {
+    log::trace!("sock_getaddrinfo enter");
+    Ok(vec![WasmValue::from_i32(
+        Errno::__WASI_ERRNO_NOSYS.0 as i32,
+    )])
+}
+
 pub fn poll_oneoff(
     frame: CallingFrame,
     wasi_ctx: &'static mut WasiCtx,
@@ -2400,6 +2411,23 @@ pub fn wasi_impls() -> Vec<WasiFunc<WasiCtx>> {
                 vec![ValType::I32],
             ),
             sock_lookup_ip
+        ),
+        sync_fn!(
+            "sock_getaddrinfo",
+            (
+                vec![
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                ],
+                vec![ValType::I32],
+            ),
+            sock_getaddrinfo
         ),
     ];
     impls
