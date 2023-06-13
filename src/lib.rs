@@ -2205,7 +2205,7 @@ pub fn wasi_impls() -> Vec<WasiFunc<WasiCtx>> {
             path_rename
         ),
         sync_fn!(
-            "path_rename",
+            "path_symlink",
             (
                 vec![
                     ValType::I32,
@@ -2216,7 +2216,7 @@ pub fn wasi_impls() -> Vec<WasiFunc<WasiCtx>> {
                 ],
                 vec![ValType::I32],
             ),
-            path_rename
+            path_symlink
         ),
         sync_fn!(
             "path_unlink_file",
