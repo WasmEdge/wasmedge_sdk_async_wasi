@@ -1801,14 +1801,48 @@ pub fn sock_setsockopt(
 }
 
 pub fn sock_getaddrinfo(
-    _frame: &mut CallingFrame,
-    _wasi_ctx: &mut WasiCtx,
-    _args: Vec<WasmValue>,
+    frame: &mut CallingFrame,
+    wasi_ctx: &mut WasiCtx,
+    args: Vec<WasmValue>,
 ) -> std::result::Result<Vec<WasmValue>, HostFuncError> {
     log::trace!("sock_getaddrinfo enter");
-    Ok(vec![WasmValue::from_i32(
-        Errno::__WASI_ERRNO_NOSYS.0 as i32,
-    )])
+    let n = 8;
+    let args: Vec<WasmVal> = args.into_iter().map(|v| v.into()).collect();
+    let mut mem = if let Some(mem) = frame.memory_mut(0) {
+        WasiMem(mem)
+    } else {
+        // MemoryOutOfBounds
+        return Err(HostFuncError::Runtime(0x88));
+    };
+
+    if let Some(
+        [WasmVal::I32(p1), WasmVal::I32(p2), WasmVal::I32(p3), WasmVal::I32(p4), WasmVal::I32(p5), WasmVal::I32(p6), WasmVal::I32(p7), WasmVal::I32(p8)],
+    ) = args.get(0..n)
+    {
+        let node = *p1 as usize;
+        let node_len = *p2 as u32;
+        let server = *p3 as usize;
+        let server_len = *p4 as u32;
+        let hint = *p5 as usize;
+        let res = *p6 as usize;
+        let max_len = *p7 as u32;
+        let res_len = *p8 as usize;
+
+        Ok(to_wasm_return(p::async_socket::sock_getaddrinfo(
+            wasi_ctx,
+            &mut mem,
+            WasmPtr::from(node),
+            node_len,
+            WasmPtr::from(server),
+            server_len,
+            WasmPtr::from(hint),
+            WasmPtr::from(res),
+            max_len,
+            WasmPtr::from(res_len),
+        )))
+    } else {
+        Err(func_type_miss_match_error())
+    }
 }
 
 pub fn poll_oneoff(
@@ -2498,6 +2532,22 @@ mod test {
     use super::*;
     use wasmedge_sdk::VmBuilder;
 
+    #[tokio::test]
+    pub async fn test_sock_getaddrinfo() {
+        let vm = Box::new(VmBuilder::default().build().unwrap());
+        let wasi_funcs = wasi_impls();
+        let wasi_ctx = Box::new(WasiCtx::new());
+        let mut wasi_vm = WasiVm::create(vm, wasi_ctx, wasi_funcs).unwrap();
+
+        let r = wasi_vm
+            .as_mut()
+            .run_func_from_file_async("wasm/socket_addr.wasm", "_start", [])
+            .await
+            .unwrap();
+
+        println!("{r:?}");
+    }
+
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     pub async fn test_vm() {
         async fn tick() {
@@ -2523,7 +2573,7 @@ mod test {
 
                 let r = wasi_vm
                     .as_mut()
-                    .run_func_from_file_async("hello.wasm", "_start", [])
+                    .run_func_from_file_async("wasm/hello.wasm", "_start", [])
                     .await
                     .unwrap();
 
