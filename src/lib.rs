@@ -2398,6 +2398,14 @@ pub fn wasi_impls() -> Vec<WasiFunc<WasiCtx>> {
             poll_oneoff
         ),
         async_fn!(
+            "epoll_oneoff",
+            (
+                vec![ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+                vec![ValType::I32],
+            ),
+            poll_oneoff
+        ),
+        async_fn!(
             "sock_lookup_ip",
             (
                 vec![
