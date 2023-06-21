@@ -27,8 +27,5 @@ wasmedge-types = { git = "https://github.com/second-state/WasmEdge.git", branch 
 
 tokio = { version = "1", features = ["full"] }
 
-[dev-dependencies]
-tokio = { version = "1", features = ["full"] }
-
 [workspace]
 exclude = ["wasm"]
