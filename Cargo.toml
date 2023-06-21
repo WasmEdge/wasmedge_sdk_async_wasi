@@ -7,21 +7,24 @@ edition = "2021"
 
 [dependencies]
 log = "0.4.17"
-wasmedge-sdk = { path = "../WasmEdge-12/bindings/rust/wasmedge-sdk", features = [
-    "async",
-    "ffi",
-] }
+
 wasmedge-async-wasi = { path = "./wasmedge_async_wasi", features = [
     "async_tokio",
 ] }
-wasmedge-sys = { path = "../WasmEdge-12/bindings/rust/wasmedge-sys", features = [
+
+
+wasmedge-sdk = { git = "https://github.com/second-state/WasmEdge.git", branch = "feat/async", features = [
     "async",
     "ffi",
 ] }
 
-wasmedge-types = { path = "../WasmEdge-12/bindings/rust/wasmedge-types" }
+wasmedge-sys = { git = "https://github.com/second-state/WasmEdge.git", branch = "feat/async", features = [
+    "async",
+    "ffi",
+] }
 
-[dev-dependencies]
+wasmedge-types = { git = "https://github.com/second-state/WasmEdge.git", branch = "feat/async" }
+
 tokio = { version = "1", features = ["full"] }
 
 [workspace]

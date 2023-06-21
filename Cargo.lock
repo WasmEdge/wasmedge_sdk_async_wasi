@@ -601,6 +601,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "setjmp"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57a4a1d465f5de0833aed8a7c76b1c01606bc8160c5a7d2c0108867dfffdfef3"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "shlex"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -758,6 +767,7 @@ dependencies = [
 [[package]]
 name = "wasmedge-macro"
 version = "0.3.0"
+source = "git+https://github.com/second-state/WasmEdge.git?branch=feat/async#5f58959a08d923725d841e941e24317537cc5b80"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -767,6 +777,7 @@ dependencies = [
 [[package]]
 name = "wasmedge-sdk"
 version = "0.8.0"
+source = "git+https://github.com/second-state/WasmEdge.git?branch=feat/async#5f58959a08d923725d841e941e24317537cc5b80"
 dependencies = [
  "anyhow",
  "num-derive",
@@ -781,6 +792,7 @@ dependencies = [
 [[package]]
 name = "wasmedge-sys"
 version = "0.13.0"
+source = "git+https://github.com/second-state/WasmEdge.git?branch=feat/async#5f58959a08d923725d841e941e24317537cc5b80"
 dependencies = [
  "bindgen",
  "cmake",
@@ -791,6 +803,7 @@ dependencies = [
  "paste",
  "rand",
  "scoped-tls",
+ "setjmp",
  "thiserror",
  "wasmedge-macro",
  "wasmedge-types",
@@ -800,6 +813,7 @@ dependencies = [
 [[package]]
 name = "wasmedge-types"
 version = "0.4.1"
+source = "git+https://github.com/second-state/WasmEdge.git?branch=feat/async#5f58959a08d923725d841e941e24317537cc5b80"
 dependencies = [
  "thiserror",
  "wat",
