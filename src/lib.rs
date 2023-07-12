@@ -1926,7 +1926,6 @@ pub fn sock_lookup_ip(
                 .await,
             ))
         } else {
-            println!("sock_lookup_ip type_miss");
             Err(func_type_miss_match_error())
         }
     })

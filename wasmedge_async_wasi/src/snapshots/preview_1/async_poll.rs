@@ -138,7 +138,6 @@ async fn poll_only_fd<M: Memory>(
                 if i >= nsubscriptions {
                     break 'wait_poll;
                 }
-                println!("poll {}", wait.len());
                 futures::select! {
                     v = wait.next() => {
                         if let Some(v) = v {
