@@ -177,6 +177,7 @@ pub async fn sock_recv<M: Memory>(
         }
 
         let (n, trunc) = s.recv(&mut iovec, native_flags).await?;
+
         if trunc {
             mem.write_data(
                 ro_flags_ptr,
