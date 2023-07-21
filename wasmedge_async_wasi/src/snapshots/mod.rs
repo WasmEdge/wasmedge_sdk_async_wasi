@@ -361,6 +361,7 @@ pub mod serialize {
         Empty,
         Listening,
         Connected,
+        Connecting,
     }
 
     impl From<ConnectState> for SerialConnectState {
@@ -368,7 +369,8 @@ pub mod serialize {
             match s {
                 ConnectState::Empty => Self::Empty,
                 ConnectState::Listening => Self::Listening,
-                ConnectState::Connect => Self::Connected,
+                ConnectState::Connected => Self::Connected,
+                ConnectState::Connecting => Self::Connecting,
             }
         }
     }
@@ -378,7 +380,8 @@ pub mod serialize {
             match self {
                 SerialConnectState::Empty => ConnectState::Empty,
                 SerialConnectState::Listening => ConnectState::Listening,
-                SerialConnectState::Connected => ConnectState::Connect,
+                SerialConnectState::Connected => ConnectState::Connected,
+                SerialConnectState::Connecting => ConnectState::Connecting,
             }
         }
     }
